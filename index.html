@@ -1,0 +1,910 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>🔪 MAFIA NIGHTS - Telegram Mini Game</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background: var(--tg-theme-bg-color, #0a0a0a);
+            font-family: 'Segoe UI', 'Poppins', system-ui, sans-serif;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 16px;
+            touch-action: manipulation;
+        }
+
+        .game-container {
+            max-width: 500px;
+            width: 100%;
+            background: linear-gradient(145deg, #1a1a2e 0%, #0f0f1a 100%);
+            border-radius: 48px;
+            padding: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        /* Header */
+        .game-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .user-badge {
+            background: rgba(0,0,0,0.6);
+            backdrop-filter: blur(8px);
+            padding: 8px 16px;
+            border-radius: 40px;
+            font-size: 12px;
+            color: #ccc;
+            font-weight: 500;
+        }
+
+        .room-code {
+            background: #ff4757;
+            padding: 8px 16px;
+            border-radius: 40px;
+            font-weight: bold;
+            font-size: 12px;
+            color: white;
+            letter-spacing: 1px;
+        }
+
+        .copy-btn {
+            background: #2ed573;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 40px;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        /* Mode Selection */
+        .mode-selector {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .mode-btn {
+            flex: 1;
+            padding: 14px;
+            border-radius: 30px;
+            border: none;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 14px;
+        }
+
+        .mode-btn.solo {
+            background: linear-gradient(135deg, #a29bfe, #6c5ce7);
+            color: white;
+        }
+
+        .mode-btn.duo {
+            background: linear-gradient(135deg, #fd79a8, #e84393);
+            color: white;
+        }
+
+        .mode-btn.multi {
+            background: linear-gradient(135deg, #00cec9, #0984e3);
+            color: white;
+        }
+
+        .mode-btn.active {
+            transform: scale(1.02);
+            box-shadow: 0 0 15px rgba(255,255,255,0.3);
+        }
+
+        /* Role Display */
+        .role-card {
+            background: linear-gradient(135deg, #2c2c3e, #1e1e2a);
+            border-radius: 32px;
+            padding: 16px;
+            text-align: center;
+            margin-bottom: 20px;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .role-icon {
+            font-size: 48px;
+            margin-bottom: 8px;
+        }
+
+        .role-name {
+            font-size: 22px;
+            font-weight: bold;
+            margin-bottom: 4px;
+        }
+
+        .role-desc {
+            font-size: 12px;
+            color: #aaa;
+        }
+
+        /* Players Grid */
+        .players-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
+            gap: 10px;
+            margin: 15px 0;
+            max-height: 280px;
+            overflow-y: auto;
+            padding: 5px;
+        }
+
+        .player-card {
+            background: rgba(255,255,255,0.08);
+            border-radius: 20px;
+            padding: 10px 6px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 1px solid transparent;
+        }
+
+        .player-card.alive {
+            border-color: #2ed573;
+            background: rgba(46,213,115,0.1);
+        }
+
+        .player-card.dead {
+            opacity: 0.5;
+            background: rgba(255,71,87,0.1);
+            filter: grayscale(0.3);
+        }
+
+        .player-card.selected {
+            border-color: #ffa502;
+            background: rgba(255,165,2,0.2);
+            transform: scale(1.02);
+        }
+
+        .player-name {
+            font-weight: bold;
+            font-size: 12px;
+            color: white;
+        }
+
+        .player-status {
+            font-size: 10px;
+            margin-top: 4px;
+        }
+
+        .player-status.alive {
+            color: #2ed573;
+        }
+
+        .player-status.dead {
+            color: #ff4757;
+        }
+
+        /* Action Buttons */
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+            margin: 15px 0;
+        }
+
+        .action-btn {
+            flex: 1;
+            background: linear-gradient(135deg, #ff4757, #c0392b);
+            border: none;
+            padding: 12px;
+            border-radius: 40px;
+            color: white;
+            font-weight: bold;
+            font-size: 14px;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .action-btn:active {
+            transform: scale(0.96);
+        }
+
+        .action-btn.secondary {
+            background: linear-gradient(135deg, #1e90ff, #0c5fbf);
+        }
+
+        .action-btn.success {
+            background: linear-gradient(135deg, #2ed573, #0a8f4a);
+        }
+
+        .action-btn.warning {
+            background: linear-gradient(135deg, #e67e22, #d35400);
+        }
+
+        .action-btn:disabled {
+            opacity: 0.5;
+            transform: none;
+        }
+
+        /* Game Log */
+        .game-log {
+            background: rgba(0,0,0,0.5);
+            border-radius: 20px;
+            padding: 10px;
+            height: 100px;
+            overflow-y: auto;
+            font-size: 11px;
+            font-family: monospace;
+        }
+
+        .log-entry {
+            padding: 3px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            color: #bbb;
+        }
+
+        /* Phase Indicator */
+        .phase-indicator {
+            text-align: center;
+            margin: 10px 0;
+            padding: 8px;
+            border-radius: 30px;
+            font-weight: bold;
+            font-size: 12px;
+        }
+
+        .phase-day {
+            background: rgba(30,144,255,0.3);
+            color: #74b9ff;
+        }
+
+        .phase-night {
+            background: rgba(0,0,0,0.6);
+            color: #ff6b81;
+        }
+
+        /* Join Screen */
+        .join-screen, .mode-screen {
+            text-align: center;
+        }
+
+        .join-input {
+            width: 100%;
+            padding: 14px;
+            border-radius: 40px;
+            border: none;
+            background: #2c2c3e;
+            color: white;
+            font-size: 16px;
+            text-align: center;
+            margin: 15px 0;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .players-count {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin: 15px 0;
+        }
+
+        .count-btn {
+            background: #2c2c3e;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 30px;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .count-btn.selected {
+            background: #ff4757;
+        }
+
+        .bot-badge {
+            background: #6c5ce7;
+            font-size: 9px;
+            padding: 2px 6px;
+            border-radius: 20px;
+            margin-left: 4px;
+        }
+    </style>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+</head>
+<body>
+<div class="game-container" id="gameContainer">
+    <!-- Mode Selection Screen -->
+    <div id="modeScreen" class="join-screen">
+        <div class="role-icon">🎭</div>
+        <h2 style="color:white">MAFIA NIGHTS</h2>
+        <p style="color:#aaa; margin:10px 0">Choose your game mode</p>
+        
+        <div class="mode-selector">
+            <button id="soloModeBtn" class="mode-btn solo">🎮 SOLO<br><small>vs BOT</small></button>
+            <button id="duoModeBtn" class="mode-btn duo">👥 DUO<br><small>2 Players</small></button>
+            <button id="multiModeBtn" class="mode-btn multi">👥 MULTI<br><small>4-6 Players</small></button>
+        </div>
+    </div>
+
+    <!-- Join Screen for Multi/Duo -->
+    <div id="joinScreen" class="join-screen hidden">
+        <div class="role-icon">🔑</div>
+        <h2 style="color:white" id="joinTitle">Join Game</h2>
+        <input type="text" id="roomCodeInput" class="join-input" placeholder="Enter Room Code">
+        <button id="joinRoomBtn" class="action-btn">🔑 Join Room</button>
+        <button id="createRoomBtn" class="action-btn secondary">✨ Create New Room</button>
+        <button id="backToModeBtn" class="action-btn warning" style="margin-top:10px">⬅️ Back</button>
+    </div>
+
+    <!-- Game Screen -->
+    <div id="gameScreen" class="hidden">
+        <div class="game-header">
+            <div class="user-badge" id="userInfo">👤 Loading...</div>
+            <div style="display: flex; gap: 6px;">
+                <div class="room-code" id="roomDisplay">MODE: ---</div>
+                <button id="copyRoomBtn" class="copy-btn hidden">📋</button>
+            </div>
+        </div>
+
+        <div class="role-card" id="roleCard">
+            <div class="role-icon" id="roleIcon">❓</div>
+            <div class="role-name" id="roleName">Waiting...</div>
+            <div class="role-desc" id="roleDesc">Game starting soon</div>
+        </div>
+
+        <div class="phase-indicator" id="phaseIndicator">
+            <span id="phaseText">⏳ Waiting...</span>
+        </div>
+
+        <div class="players-grid" id="playersGrid"></div>
+
+        <div class="action-buttons">
+            <button id="actionBtn" class="action-btn" disabled>⏳ Wait...</button>
+            <button id="voteBtn" class="action-btn secondary" disabled>🗳️ Vote</button>
+        </div>
+
+        <div class="game-log" id="gameLog">
+            <div class="log-entry">🎭 Welcome to MAFIA NIGHTS!</div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const tg = window.Telegram.WebApp;
+    tg.expand();
+    tg.MainButton.hide();
+
+    // ----------------------------- GLOBAL STATE -----------------------------
+    let currentUser = {
+        id: 'anonymous',
+        name: 'Guest',
+        role: null,
+        isAlive: true,
+        roomCode: null,
+        isHost: false
+    };
+
+    let gameState = {
+        mode: null, // solo, duo, multi
+        phase: 'waiting',
+        players: [],
+        currentRoom: null,
+        hostId: null,
+        winner: null,
+        round: 0,
+        myAction: null,
+        botPlayers: []
+    };
+
+    let selectedPlayerId = null;
+    let myRoleAction = null;
+
+    // Get Telegram User
+    if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
+        const user = tg.initDataUnsafe.user;
+        currentUser.id = user.id.toString();
+        currentUser.name = user.first_name + (user.last_name ? ' ' + user.last_name : '');
+        document.getElementById('userInfo').innerHTML = `👤 ${currentUser.name}`;
+    } else {
+        currentUser.id = 'player_' + Math.random().toString(36).substr(2, 6);
+        currentUser.name = 'Player';
+    }
+
+    // Room storage
+    let rooms = JSON.parse(localStorage.getItem('mafia_multi_rooms') || '{}');
+
+    function saveRooms() {
+        localStorage.setItem('mafia_multi_rooms', JSON.stringify(rooms));
+    }
+
+    function generateRoomCode() {
+        return Math.random().toString(36).substring(2, 8).toUpperCase();
+    }
+
+    // ----------------------------- MODE SELECTION -----------------------------
+    document.getElementById('soloModeBtn').onclick = () => startSoloMode();
+    document.getElementById('duoModeBtn').onclick = () => {
+        gameState.mode = 'duo';
+        document.getElementById('modeScreen').classList.add('hidden');
+        document.getElementById('joinScreen').classList.remove('hidden');
+        document.getElementById('joinTitle').innerHTML = '👥 DUO MODE (2 Players)';
+    };
+    document.getElementById('multiModeBtn').onclick = () => {
+        gameState.mode = 'multi';
+        document.getElementById('modeScreen').classList.add('hidden');
+        document.getElementById('joinScreen').classList.remove('hidden');
+        document.getElementById('joinTitle').innerHTML = '👥 MULTI MODE (4-6 Players)';
+    };
+    document.getElementById('backToModeBtn').onclick = () => {
+        document.getElementById('joinScreen').classList.add('hidden');
+        document.getElementById('modeScreen').classList.remove('hidden');
+    };
+
+    // ----------------------------- SOLO MODE (vs BOT) -----------------------------
+    function startSoloMode() {
+        gameState.mode = 'solo';
+        gameState.phase = 'night';
+        
+        // Create players
+        const botNames = ['Shadow', 'Ghost', 'Viper', 'Raven', 'Wolf', 'Phantom'];
+        const shuffled = [...botNames].sort(() => Math.random() - 0.5);
+        
+        gameState.players = [
+            { id: currentUser.id, name: currentUser.name, role: null, isAlive: true, isBot: false },
+            { id: 'bot1', name: shuffled[0], role: null, isAlive: true, isBot: true },
+            { id: 'bot2', name: shuffled[1], role: null, isAlive: true, isBot: true },
+            { id: 'bot3', name: shuffled[2], role: null, isAlive: true, isBot: true }
+        ];
+        
+        // Assign roles (1 mafia among bots, user is town)
+        const roleList = ['mafia', 'villager', 'villager', 'villager'];
+        const shuffledRoles = [...roleList].sort(() => Math.random() - 0.5);
+        
+        gameState.players.forEach((p, idx) => {
+            if (p.id === currentUser.id) {
+                p.role = 'villager';
+                currentUser.role = 'villager';
+            } else {
+                p.role = shuffledRoles[idx % shuffledRoles.length];
+            }
+        });
+        
+        currentUser.isAlive = true;
+        gameState.gameStarted = true;
+        gameState.round = 1;
+        
+        document.getElementById('modeScreen').classList.add('hidden');
+        document.getElementById('joinScreen').classList.add('hidden');
+        document.getElementById('gameScreen').classList.remove('hidden');
+        document.getElementById('roomDisplay').innerHTML = 'MODE: SOLO 🎮';
+        document.getElementById('copyRoomBtn').classList.add('hidden');
+        
+        updateRoleUI();
+        updatePlayersList();
+        addLog('🎮 SOLO MODE Started! You are a VILLAGER');
+        addLog('🔪 One of the bots is MAFIA! Find and eliminate them.');
+        
+        startNightPhase();
+    }
+
+    // ----------------------------- CREATE/JOIN ROOM (Duo/Multi) -----------------------------
+    function createRoom() {
+        const roomCode = generateRoomCode();
+        const maxPlayers = gameState.mode === 'duo' ? 2 : 6;
+        const minPlayers = gameState.mode === 'duo' ? 2 : 4;
+        
+        rooms[roomCode] = {
+            code: roomCode,
+            mode: gameState.mode,
+            hostId: currentUser.id,
+            minPlayers: minPlayers,
+            maxPlayers: maxPlayers,
+            players: [{
+                id: currentUser.id,
+                name: currentUser.name,
+                role: null,
+                isAlive: true
+            }],
+            phase: 'waiting',
+            winner: null,
+            gameStarted: false,
+            round: 0
+        };
+        saveRooms();
+        joinRoom(roomCode);
+        addLog(`🎮 Room created! Code: ${roomCode} (${minPlayers}-${maxPlayers} players)`);
+        copyRoomCode(roomCode);
+    }
+
+    function joinRoom(roomCode) {
+        const room = rooms[roomCode.toUpperCase()];
+        if (!room) {
+            addLog('❌ Room not found!');
+            tg.showAlert('Room not found!');
+            return false;
+        }
+        
+        if (room.players.length >= room.maxPlayers) {
+            addLog('❌ Room is full!');
+            tg.showAlert('Room is full!');
+            return false;
+        }
+        
+        const existingPlayer = room.players.find(p => p.id === currentUser.id);
+        if (!existingPlayer) {
+            room.players.push({
+                id: currentUser.id,
+                name: currentUser.name,
+                role: null,
+                isAlive: true
+            });
+            saveRooms();
+        }
+        
+        currentUser.roomCode = roomCode.toUpperCase();
+        gameState.mode = room.mode;
+        gameState.currentRoom = roomCode.toUpperCase();
+        gameState.players = room.players;
+        gameState.hostId = room.hostId;
+        currentUser.isHost = (currentUser.id === room.hostId);
+        
+        document.getElementById('roomDisplay').innerHTML = `ROOM: ${roomCode.toUpperCase()}`;
+        document.getElementById('joinScreen').classList.add('hidden');
+        document.getElementById('gameScreen').classList.remove('hidden');
+        document.getElementById('copyRoomBtn').classList.remove('hidden');
+        document.getElementById('copyRoomBtn').onclick = () => copyRoomCode(roomCode.toUpperCase());
+        
+        if (!room.gameStarted && room.players.length >= room.minPlayers && currentUser.isHost) {
+            addLog(`✅ ${room.players.length}/${room.maxPlayers} players. Click START GAME!`);
+            document.getElementById('actionBtn').innerText = '🎮 Start Game';
+            document.getElementById('actionBtn').disabled = false;
+            document.getElementById('actionBtn').classList.add('success');
+            document.getElementById('actionBtn').onclick = startMultiGame;
+        } else if (room.gameStarted) {
+            updateGameUI();
+        } else {
+            addLog(`👥 Waiting for ${room.minPlayers - room.players.length} more players...`);
+            updatePlayersList();
+        }
+        
+        return true;
+    }
+
+    function startMultiGame() {
+        const room = rooms[currentUser.roomCode];
+        if (!room || currentUser.id !== room.hostId) return;
+        if (room.players.length < room.minPlayers) {
+            addLog(`⚠️ Need at least ${room.minPlayers} players!`);
+            return;
+        }
+        
+        // Assign roles based on player count
+        const players = room.players;
+        const playerCount = players.length;
+        let mafiaCount = Math.floor(playerCount / 3);
+        if (mafiaCount < 1) mafiaCount = 1;
+        
+        let roles = [];
+        for (let i = 0; i < mafiaCount; i++) roles.push('mafia');
+        roles.push('doctor');
+        roles.push('cop');
+        while (roles.length < playerCount) roles.push('villager');
+        
+        const shuffledRoles = roles.sort(() => Math.random() - 0.5);
+        players.forEach((p, idx) => {
+            p.role = shuffledRoles[idx];
+        });
+        
+        room.gameStarted = true;
+        room.phase = 'day';
+        room.round = 1;
+        saveRooms();
+        
+        updateGameUI();
+        addLog('🎬 GAME STARTED! Check your role!');
+        tg.HapticFeedback.notificationOccurred('success');
+    }
+
+    function copyRoomCode(code) {
+        navigator.clipboard.writeText(code);
+        tg.showPopup({ title: 'Copied!', message: `Room Code: ${code}`, buttons: [{type: 'ok'}] });
+    }
+
+    // ----------------------------- GAME LOGIC -----------------------------
+    function updateGameUI() {
+        if (gameState.mode === 'solo') {
+            updatePlayersList();
+            return;
+        }
+        const room = rooms[currentUser.roomCode];
+        if (!room) return;
+        
+        const myPlayer = room.players.find(p => p.id === currentUser.id);
+        if (myPlayer) {
+            currentUser.role = myPlayer.role;
+            currentUser.isAlive = myPlayer.isAlive;
+            updateRoleUI();
+        }
+        
+        gameState.phase = room.phase;
+        gameState.players = room.players;
+        updatePhaseUI();
+        updatePlayersList();
+        updateActionButtons();
+    }
+
+    function updateRoleUI() {
+        const roleConfig = {
+            mafia: { icon: '🔪', name: 'MAFIA', desc: 'Kill one player at night', action: 'kill' },
+            doctor: { icon: '💊', name: 'DOCTOR', desc: 'Save one player at night', action: 'heal' },
+            cop: { icon: '🔍', name: 'COP', desc: 'Investigate a player', action: 'investigate' },
+            villager: { icon: '👨‍🌾', name: 'VILLAGER', desc: 'Vote during the day', action: null }
+        };
+        const info = roleConfig[currentUser.role] || roleConfig.villager;
+        document.getElementById('roleIcon').innerHTML = info.icon;
+        document.getElementById('roleName').innerHTML = info.name;
+        document.getElementById('roleDesc').innerHTML = info.desc;
+        myRoleAction = info.action;
+    }
+
+    function updatePhaseUI() {
+        const phaseText = document.getElementById('phaseText');
+        const phaseDiv = document.getElementById('phaseIndicator');
+        if (gameState.phase === 'day') {
+            phaseText.innerHTML = '☀️ DAY - Vote to eliminate';
+            phaseDiv.className = 'phase-indicator phase-day';
+        } else if (gameState.phase === 'night') {
+            phaseText.innerHTML = '🌙 NIGHT - Use your ability';
+            phaseDiv.className = 'phase-indicator phase-night';
+        } else {
+            phaseText.innerHTML = '⏳ Waiting...';
+        }
+    }
+
+    function updatePlayersList() {
+        const players = gameState.mode === 'solo' ? gameState.players : 
+                       (rooms[currentUser.roomCode]?.players || []);
+        const grid = document.getElementById('playersGrid');
+        grid.innerHTML = '';
+        
+        players.forEach(player => {
+            const card = document.createElement('div');
+            card.className = `player-card ${player.isAlive ? 'alive' : 'dead'}`;
+            if (selectedPlayerId === player.id) card.classList.add('selected');
+            
+            let roleDisplay = '';
+            if (gameState.mode === 'solo' && !player.isAlive && player.role) {
+                roleDisplay = `<div style="font-size:9px;color:#ffa502">${player.role === 'mafia' ? '🔪 MAFIA' : '👨‍🌾 TOWN'}</div>`;
+            }
+            
+            card.innerHTML = `
+                <div class="player-name">${player.name} ${player.isBot ? '<span class="bot-badge">🤖</span>' : ''}</div>
+                <div class="player-status ${player.isAlive ? 'alive' : 'dead'}">${player.isAlive ? '🟢 Alive' : '💀 Dead'}</div>
+                ${roleDisplay}
+            `;
+            
+            if (player.isAlive && player.id !== currentUser.id && gameState.gameStarted && gameState.phase !== 'waiting') {
+                card.style.cursor = 'pointer';
+                card.onclick = () => {
+                    selectedPlayerId = player.id;
+                    updatePlayersList();
+                    if (gameState.phase === 'day') {
+                        document.getElementById('voteBtn').disabled = false;
+                    } else if (gameState.phase === 'night' && myRoleAction && currentUser.isAlive) {
+                        document.getElementById('actionBtn').disabled = false;
+                    }
+                };
+            }
+            grid.appendChild(card);
+        });
+    }
+
+    function updateActionButtons() {
+        const voteBtn = document.getElementById('voteBtn');
+        const actionBtn = document.getElementById('actionBtn');
+        
+        if (!gameState.gameStarted && gameState.mode !== 'solo') {
+            if (currentUser.isHost) {
+                actionBtn.innerText = '🎮 Start Game';
+                actionBtn.disabled = false;
+                actionBtn.classList.add('success');
+            } else {
+                actionBtn.innerText = '⏳ Waiting for host...';
+                actionBtn.disabled = true;
+            }
+            voteBtn.disabled = true;
+            return;
+        }
+        
+        if (!currentUser.isAlive) {
+            actionBtn.innerText = '⚰️ You are dead';
+            actionBtn.disabled = true;
+            voteBtn.disabled = true;
+            return;
+        }
+        
+        if (gameState.phase === 'day') {
+            actionBtn.innerText = '☀️ Day Phase - Vote below';
+            actionBtn.disabled = true;
+            voteBtn.disabled = !selectedPlayerId;
+            voteBtn.innerText = '🗳️ Vote to Eliminate';
+            voteBtn.onclick = performVote;
+        } else if (gameState.phase === 'night') {
+            voteBtn.disabled = true;
+            if (myRoleAction && selectedPlayerId) {
+                actionBtn.disabled = false;
+                if (myRoleAction === 'kill') actionBtn.innerText = '🔪 Kill';
+                else if (myRoleAction === 'heal') actionBtn.innerText = '💊 Save';
+                else if (myRoleAction === 'investigate') actionBtn.innerText = '🔍 Investigate';
+                actionBtn.onclick = performNightAction;
+            } else {
+                actionBtn.disabled = true;
+                actionBtn.innerText = '🌙 Select a player';
+            }
+        }
+    }
+
+    function performVote() {
+        if (!selectedPlayerId) return;
+        
+        let targetPlayer;
+        if (gameState.mode === 'solo') {
+            targetPlayer = gameState.players.find(p => p.id === selectedPlayerId);
+            if (targetPlayer && targetPlayer.isAlive) {
+                targetPlayer.isAlive = false;
+                addLog(`🗳️ ${currentUser.name} voted to eliminate ${targetPlayer.name}`);
+                if (targetPlayer.role === 'mafia') {
+                    addLog('🎉 MAFIA eliminated! TOWN WINS! 🎉');
+                    endGame('Town Wins!');
+                } else {
+                    addLog(`💀 ${targetPlayer.name} was a Villager!`);
+                    startNightPhase();
+                }
+            }
+        } else {
+            const room = rooms[currentUser.roomCode];
+            if (room) {
+                const target = room.players.find(p => p.id === selectedPlayerId);
+                if (target && target.isAlive) {
+                    target.isAlive = false;
+                    addLog(`🗳️ ${currentUser.name} voted to eliminate ${target.name}`);
+                    checkWinCondition(room);
+                    room.phase = 'night';
+                    saveRooms();
+                    updateGameUI();
+                }
+            }
+        }
+        
+        selectedPlayerId = null;
+        updatePlayersList();
+        updateActionButtons();
+    }
+
+    function performNightAction() {
+        if (!selectedPlayerId || !myRoleAction) return;
+        
+        if (gameState.mode === 'solo') {
+            const target = gameState.players.find(p => p.id === selectedPlayerId);
+            if (target && target.isAlive) {
+                if (myRoleAction === 'investigate') {
+                    addLog(`🔍 ${target.name} is ${target.role === 'mafia' ? 'MAFIA! 🔪' : 'INNOCENT 👨‍🌾'}`);
+                }
+            }
+            selectedPlayerId = null;
+            updatePlayersList();
+            document.getElementById('actionBtn').disabled = true;
+            addLog('🌅 Day begins...');
+            gameState.phase = 'day';
+            updatePhaseUI();
+            updateActionButtons();
+        } else {
+            const room = rooms[currentUser.roomCode];
+            if (room) {
+                const target = room.players.find(p => p.id === selectedPlayerId);
+                if (target && target.isAlive) {
+                    if (myRoleAction === 'kill') {
+                        target.isAlive = false;
+                        addLog(`🔪 MAFIA killed ${target.name}!`);
+                    } else if (myRoleAction === 'heal') {
+                        addLog(`💊 DOCTOR saved ${target.name}`);
+                    } else if (myRoleAction === 'investigate') {
+                        addLog(`🔍 ${target.name} → Role: ${target.role}`);
+                    }
+                    checkWinCondition(room);
+                    room.phase = 'day';
+                    saveRooms();
+                    updateGameUI();
+                }
+            }
+        }
+        selectedPlayerId = null;
+        updatePlayersList();
+        updateActionButtons();
+    }
+
+    function startNightPhase() {
+        if (gameState.mode !== 'solo') return;
+        gameState.phase = 'night';
+        updatePhaseUI();
+        addLog('🌙 Night falls... Mafia makes a move');
+        
+        // Bot mafia kills random town
+        const mafia = gameState.players.find(p => p.role === 'mafia' && p.isAlive);
+        const towns = gameState.players.filter(p => p.role !== 'mafia' && p.isAlive && p.id !== currentUser.id);
+        
+        if (mafia && towns.length > 0) {
+            const victim = towns[Math.floor(Math.random() * towns.length)];
+            victim.isAlive = false;
+            addLog(`🔪 MAFIA killed ${victim.name}!`);
+        }
+        
+        setTimeout(() => {
+            gameState.phase = 'day';
+            updatePhaseUI();
+            addLog('☀️ Day begins! Time to vote.');
+            checkWinConditionSolo();
+            updatePlayersList();
+            updateActionButtons();
+        }, 2000);
+    }
+
+    function checkWinConditionSolo() {
+        const mafiaAlive = gameState.players.some(p => p.role === 'mafia' && p.isAlive);
+        const townAlive = gameState.players.some(p => p.role !== 'mafia' && p.isAlive);
+        
+        if (!mafiaAlive) endGame('🎉 TOWN WINS! You defeated the Mafia! 🎉');
+        else if (!townAlive) endGame('💀 MAFIA WINS! The town has fallen! 💀');
+    }
+
+    function checkWinCondition(room) {
+        const alive = room.players.filter(p => p.isAlive);
+        const mafiaAlive = alive.some(p => p.role === 'mafia');
+        const townAlive = alive.some(p => p.role && p.role !== 'mafia');
+        
+        if (!mafiaAlive) endGame('🏆 TOWN WINS! All mafia eliminated!');
+        else if (!townAlive) endGame('🔪 MAFIA WINS! Town eliminated!');
+    }
+
+    function endGame(message) {
+        gameState.gameStarted = false;
+        addLog(message);
+        tg.showPopup({ title: 'Game Over', message: message, buttons: [{type: 'ok'}] });
+        setTimeout(() => location.reload(), 3000);
+    }
+
+    function addLog(msg) {
+        const logDiv = document.getElementById('gameLog');
+        const entry = document.createElement('div');
+        entry.className = 'log-entry';
+        entry.innerHTML = `🕐 ${new Date().toLocaleTimeString()} - ${msg}`;
+        logDiv.appendChild(entry);
+        logDiv.scrollTop = logDiv.scrollHeight;
+    }
+
+    // Event Listeners
+    document.getElementById('createRoomBtn').onclick = createRoom;
+    document.getElementById('joinRoomBtn').onclick = () => {
+        const code = document.getElementById('roomCodeInput').value;
+        if (code) joinRoom(code);
+    };
+    
+    tg.ready();
+</script>
+</body>
+</html>
